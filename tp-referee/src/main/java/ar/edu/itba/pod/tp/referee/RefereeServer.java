@@ -17,6 +17,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.UUID;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  *
@@ -24,6 +26,7 @@ import java.util.UUID;
  */
 public class RefereeServer implements Referee
 {
+	public static final String ENDPOINT = "endpoint:";
 
 	final List<Player> playerServers = new ArrayList<Player>();
 	final Map<Player, Registration> registrations = new HashMap();
@@ -47,7 +50,7 @@ public class RefereeServer implements Referee
 		if (playing) {
 			throw new RemoteException("ya estan jugando!");
 		}
-		String playerId = playerName + "-" + Thread.currentThread().getName().substring(18);
+		String playerId = buildPlayerName(playerName, playerClient);
 		System.out.println("nuevo player " + playerId);
 		Registration result = register(playerId, playerClient);
 		return result;
@@ -167,5 +170,16 @@ public class RefereeServer implements Referee
 			}
 		}
 		return clientReg;
+	}
+
+	private String buildPlayerName(String playerName, Player playerClient)
+	{
+		String tmp = playerClient.toString();
+		int i = tmp.indexOf(ENDPOINT);
+		tmp = tmp.substring(i + ENDPOINT.length());
+		int j = tmp.indexOf("]") + 1;
+		tmp = tmp.substring(0, j);
+		String playerId = playerName + "-" + tmp;
+		return playerId;
 	}
 }
