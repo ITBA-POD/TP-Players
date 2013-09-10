@@ -11,4 +11,6 @@ public interface Referee extends Remote
 	void registerRequest(Player player, Request request) throws RemoteException;
 
 	void registerResponse(Player player, Response response) throws RemoteException;
+	
+	String showResults() throws RemoteException;
 }

@@ -77,7 +77,6 @@ public class PlayerServer implements Player
 
 		System.out.println("invoke " + request);
 		this.referee.registerRequest(this, request);
-//		Thread.sleep(100);
 		try {
 			Response response = target.operate(request);
 			System.out.println("result " + response);

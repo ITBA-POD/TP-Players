@@ -50,7 +50,7 @@ public class RefereeApp
 			String line;
 			do {
 				line = scan.next();
-				server.showResults();
+				System.out.println(server.showResults());
 				
 			} while(!"x".equals(line));
 			System.exit(0);

@@ -10,10 +10,10 @@ import java.rmi.RemoteException;
  *
  * @author mariano
  */
-public class PlayerLooserException extends RemoteException
+public class PlayerLoserException extends RemoteException
 {
 
-	public PlayerLooserException(String s)
+	public PlayerLoserException(String s)
 	{
 		super(s);
 	}

@@ -68,6 +68,7 @@ public class PlayerApp
 			System.exit(0);
 		}
 		catch (Exception e) {
+			e.printStackTrace();
 			System.err.println("Client exception: " + e.toString());			
 			System.err.println("PERDI!");
 			System.exit(1);

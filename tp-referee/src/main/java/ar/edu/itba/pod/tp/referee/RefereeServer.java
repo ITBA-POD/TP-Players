@@ -5,6 +5,7 @@
 package ar.edu.itba.pod.tp.referee;
 
 import ar.edu.itba.pod.tp.interfaces.Player;
+import ar.edu.itba.pod.tp.interfaces.PlayerLoserException;
 import ar.edu.itba.pod.tp.interfaces.Referee;
 import ar.edu.itba.pod.tp.interfaces.Registration;
 import ar.edu.itba.pod.tp.interfaces.Request;
@@ -17,8 +18,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.UUID;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 /**
  *
@@ -109,21 +108,25 @@ public class RefereeServer implements Referee
 		
 	}
 
-	void showResults()
+	@Override
+	public String showResults() throws RemoteException
 	{
+		final StringBuilder result = new StringBuilder();
+		result.append("Current Results:\n");
 		for (Map.Entry<Player, Registration> entry : initialRegistrations.entrySet()) {
 			Registration registration = entry.getValue();
 			boolean survived = registrations.containsKey(entry.getKey());
 			boolean winnerClient = registration.clientCount >= clientTotal;
 			boolean winnerServer = registration.serverCount >= clientTotal;
 			if (survived) {
-				System.out.println("Player:" + registration.name + " " + (winnerClient ? "C" : "-") + (winnerServer ? "S" : "-") + " C:" + registration.clientCount + " S: " + registration.serverCount);
+				result.append(String.format("Player:%s %s%s C:%s S: %s\n", registration.name, winnerClient ? "C" : "-", winnerServer ? "S" : "-", registration.clientCount, registration.serverCount));
 			} else {
-				System.out.println("Player:" + registration.name + " LOSER C:" + registration.clientCount + " S: " + registration.serverCount);
+				result.append(String.format("Player:%s LOSER C:%s S: %s\n", registration.name, registration.clientCount, registration.serverCount));
 			}
 		}
-		
+		return result.toString();
 	}
+	
 	private Registration register(String playerName, Player playerClient)
 	{
 		
@@ -140,6 +143,7 @@ public class RefereeServer implements Referee
 			initialRegistrations.put(playerClient, result);
 			requests.put(result.id, new ArrayList());
 		}
+
 		synchronized (this) {
 			return result;
 		}
@@ -152,10 +156,10 @@ public class RefereeServer implements Referee
 	
 	private RemoteException kickOutPlayer(Player playerClient, String message) throws RemoteException
 	{
-		synchronized (this) {
+		synchronized (registrations) {
 			registrations.remove(playerClient);
 		}
-		return new RemoteException("[LOSER] "+ message);
+		return new PlayerLoserException("[LOSER] "+ message + "\n" + showResults());
 	}
 
 	private Registration findRegistration(Player player) throws RemoteException
