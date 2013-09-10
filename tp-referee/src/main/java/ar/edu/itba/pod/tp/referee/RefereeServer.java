@@ -116,10 +116,10 @@ public class RefereeServer implements Referee
 		for (Map.Entry<Player, Registration> entry : initialRegistrations.entrySet()) {
 			Registration registration = entry.getValue();
 			boolean survived = registrations.containsKey(entry.getKey());
-			boolean winnerClient = registration.clientCount >= clientTotal;
-			boolean winnerServer = registration.serverCount >= clientTotal;
+			boolean okClient = registration.clientCount >= clientTotal;
+			boolean okServer = registration.serverCount >= clientTotal;
 			if (survived) {
-				result.append(String.format("Player:%s %s%s C:%s S: %s\n", registration.name, winnerClient ? "C" : "-", winnerServer ? "S" : "-", registration.clientCount, registration.serverCount));
+				result.append(String.format("Player:%s %s%s C:%s S: %s\n", registration.name, okClient ? "C" : "-", okServer ? "S" : "-", registration.clientCount, registration.serverCount));
 			} else {
 				result.append(String.format("Player:%s LOSER C:%s S: %s\n", registration.name, registration.clientCount, registration.serverCount));
 			}
