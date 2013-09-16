@@ -76,8 +76,10 @@ public class RefereeServer implements Referee
 		List<Request> playerRequests = requests.get(clientReg.id);
 		playerRequests.add(request);
 
-		if (clientReg.serverCount >= clientTotal) {
-			winners.add(clientReg);
+		if (clientReg.clientCount >= clientTotal && clientReg.serverCount >= clientTotal) {
+			if (!winners.contains(clientReg)) {
+				winners.add(clientReg);
+			}
 		}
 	}
 
@@ -106,6 +108,11 @@ public class RefereeServer implements Referee
 			throw kickOutPlayer(player, "NO ESTA LA OPERACION!!!");
 		}
 		
+		if (clientReg.clientCount >= clientTotal && clientReg.serverCount >= clientTotal) {
+			if (!winners.contains(clientReg)) {
+				winners.add(clientReg);
+			}
+		}
 	}
 
 	@Override
@@ -123,6 +130,11 @@ public class RefereeServer implements Referee
 			} else {
 				result.append(String.format("Player:%s LOSER C:%s S: %s\n", registration.name, registration.clientCount, registration.serverCount));
 			}
+		}
+		
+		result.append("\n\n winners:\n");
+		for (Registration registration : winners) {
+			result.append(String.format("Player: %s\n", registration.name));
 		}
 		return result.toString();
 	}
