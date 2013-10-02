@@ -74,5 +74,21 @@ public class MasterServer implements Master
 	{
 		throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
 	}
+
+	Map<String, Referee> getReferees()
+	{
+		return referees;
+	}
+
+	int getRequestsTotal()
+	{
+		return requestsTotal;
+	}
+
+	int getGameTotal()
+	{
+		return gameTotal;
+	}
+
 	
 }

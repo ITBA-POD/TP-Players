@@ -198,4 +198,16 @@ public class RefereeServer implements Referee
 		String playerId = playerName + "-" + tmp;
 		return playerId;
 	}
+
+	public void hostGame(int gameIn, String gameHash) throws RemoteException
+	{
+		System.out.println("hostGame");
+//		throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+	}
+
+	public void joinGame(int gameIn, String refereeName) throws RemoteException
+	{
+		System.out.println("joinGame");
+		throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+	}
 }

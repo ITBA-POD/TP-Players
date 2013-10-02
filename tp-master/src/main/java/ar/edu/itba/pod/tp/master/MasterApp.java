@@ -7,7 +7,11 @@ import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
+import java.util.Collection;
+import java.util.Map;
 import java.util.Scanner;
+import java.util.UUID;
+import java.util.concurrent.ExecutorService;
 import org.apache.commons.cli.BasicParser;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
@@ -17,6 +21,8 @@ import org.apache.commons.cli.ParseException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * Hello world!
@@ -44,17 +50,46 @@ public class MasterApp
 		Registry registry = LocateRegistry.createRegistry(port);
 
 		System.out.println(String.format("Master started - requests total: %s game score total: %s", requestsTotal, gameTotal));
-		MasterServer server = new MasterServer(registry, requestsTotal, gameTotal);
+		final MasterServer server = new MasterServer(registry, requestsTotal, gameTotal);
 		Master stub = (Master) UnicastRemoteObject.exportObject(server, port);
 		registry.bind("master", stub);
-		ScheduledExecutorService newScheduledThreadPool = Executors.newScheduledThreadPool(2);
+		ExecutorService executor = Executors.newScheduledThreadPool(2);
+
+		do {
+			System.out.println(String.format("Press any key to start: %s players", server.getReferees().size()));
+			Scanner scan = new Scanner(System.in);
+			scan.nextLine();
+			
+		} while(server.getReferees().size() < 2);
+		System.out.println(String.format("Game will finish in %s seconds. %d players", timeout, server.getReferees().size()));
 		
-		System.out.println("Press any key to start");
-		Scanner scan = new Scanner(System.in);
-		scan.nextLine();
-		
-		newScheduledThreadPool.awaitTermination(timeout, TimeUnit.SECONDS);
+		executor.submit(new Runnable() {
+
+			public void run()
+			{
+				try {
+					final Referee[] referees = server.getReferees().values().toArray(new Referee[0]);
+					final int opt = (int) (java.lang.Math.random() * referees.length);
+					Referee referee = referees[opt];
+					
+					final String salt = UUID.randomUUID().toString();
+					referee.hostGame(requestsTotal, salt);
+					for (Referee player : referees) {
+						if (player == referee) {
+							continue;
+						}
+						player.joinGame(0, "mm");
+					}
+				}
+				catch (RemoteException ex) {
+					Logger.getLogger(MasterApp.class.getName()).log(Level.SEVERE, null, ex);
+				}
+			}
+		});
+		executor.awaitTermination(timeout, TimeUnit.SECONDS);
 				
+		System.out.println("Finished");
+		System.exit(0);
     }
 
 	private static Options createOptions()
