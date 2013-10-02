@@ -10,5 +10,6 @@
         <module>../tp-interfaces</module>
         <module>../tp-player</module>
         <module>../tp-referee</module>
+        <module>../tp-master</module>
     </modules>
 </project>
