@@ -12,13 +12,19 @@ import ar.edu.itba.pod.tp.interfaces.Registration;
 import ar.edu.itba.pod.tp.interfaces.Request;
 import ar.edu.itba.pod.tp.interfaces.Response;
 import ar.edu.itba.pod.tp.interfaces.Utils;
+import java.rmi.AccessException;
+import java.rmi.NotBoundException;
+import java.rmi.Remote;
 import java.rmi.RemoteException;
+import java.rmi.registry.Registry;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.UUID;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  *
@@ -35,14 +41,16 @@ public class RefereeServer implements Referee
 	final Random random = new Random();
 	final Map<Integer, List<Request>> requests = new HashMap();
 	boolean playing;
-	final int clientTotal;
+	final int requestsTotal;
 	final Map<String, List<Player>> players = new HashMap();
 	final String name;
+	final Registry registry;
 
-	public RefereeServer(String name, int clientTotal)
+	public RefereeServer(String name, int requestsTotal, Registry registry)
 	{
 		this.name = name;
-		this.clientTotal = clientTotal;
+		this.requestsTotal = requestsTotal;
+		this.registry = registry;
 	}
 
 	@Override
@@ -84,7 +92,7 @@ public class RefereeServer implements Referee
 		List<Request> playerRequests = requests.get(clientReg.id);
 		playerRequests.add(request);
 
-		if (clientReg.clientCount >= clientTotal && clientReg.serverCount >= clientTotal) {
+		if (clientReg.clientCount >= requestsTotal && clientReg.serverCount >= requestsTotal) {
 			if (!winners.contains(clientReg)) {
 				winners.add(clientReg);
 			}
@@ -116,7 +124,7 @@ public class RefereeServer implements Referee
 			throw kickOutPlayer(player, "NO ESTA LA OPERACION!!!");
 		}
 		
-		if (clientReg.clientCount >= clientTotal && clientReg.serverCount >= clientTotal) {
+		if (clientReg.clientCount >= requestsTotal && clientReg.serverCount >= requestsTotal) {
 			if (!winners.contains(clientReg)) {
 				winners.add(clientReg);
 			}
@@ -131,8 +139,8 @@ public class RefereeServer implements Referee
 		for (Map.Entry<Player, Registration> entry : initialRegistrations.entrySet()) {
 			Registration registration = entry.getValue();
 			boolean survived = registrations.containsKey(entry.getKey());
-			boolean okClient = registration.clientCount >= clientTotal;
-			boolean okServer = registration.serverCount >= clientTotal;
+			boolean okClient = registration.clientCount >= requestsTotal;
+			boolean okServer = registration.serverCount >= requestsTotal;
 			if (survived) {
 				result.append(String.format("Player:%s %s%s C:%s S: %s\n", registration.name, okClient ? "C" : "-", okServer ? "S" : "-", registration.clientCount, registration.serverCount));
 			} else {
@@ -155,7 +163,7 @@ public class RefereeServer implements Referee
 		final int clientSeq = random.nextInt();
 		final int serverSeq = random.nextInt();
 
-		Registration result = new Registration(playerName, seq, clientSeq, serverSeq, salt, playerServers, clientTotal);
+		Registration result = new Registration(playerName, seq, clientSeq, serverSeq, salt, playerServers, requestsTotal);
 		
 		synchronized (registrations) {
 			playerServers.add(playerClient);
@@ -210,14 +218,27 @@ public class RefereeServer implements Referee
 	@Override
 	public GameResult hostGame(int gameIn, String gameHash, List<String> players) throws RemoteException
 	{
-		System.out.println("hostGame");
+		System.out.println("hostGame " + gameHash);
+		for (String player : players) {
+			System.out.println("Looking for player " + player);
+			Referee otherReferee;
+			try {
+				otherReferee = (Referee) registry.lookup("referees/" + player);
+
+				otherReferee.joinGame(gameIn, gameHash);
+			}
+			catch (Exception ex) {
+				Logger.getLogger(RefereeServer.class.getName()).log(Level.SEVERE, null, ex);
+			}
+		}
 //		throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
 		return null;
 	}
 
-	public void joinGame(int gameIn, String refereeName) throws RemoteException
+	@Override
+	public void joinGame(int gameIn, String gameHash) throws RemoteException
 	{
 		System.out.println("joinGame");
-		throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+//		throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
 	}
 }

@@ -101,7 +101,8 @@ public class MasterServer implements Master
 		return referees;
 	}
 
-	int getRequestsTotal()
+	@Override
+	public int getRequestsTotal()
 	{
 		return requestsTotal;
 	}

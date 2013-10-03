@@ -38,13 +38,15 @@ public class RefereeApp
 			System.out.println("Registering Referee " + name + " on master: " + host + ":" + port);
 			final Registry registry = LocateRegistry.getRegistry(host, port);
 
-			final RefereeServer server = new RefereeServer(name, 1);
+			System.out.println("Loading Master");
+			final Master master = (Master) registry.lookup("master");
+			final int requestsTotal = master.getRequestsTotal();
+			
+			final RefereeServer server = new RefereeServer(name, requestsTotal, registry);
 			System.out.println("Binding my referee");
 			final Referee stub = (Referee) UnicastRemoteObject.exportObject(server, 0);
 			registry.bind("referees/" + name, stub);
 
-			System.out.println("Loading Master");
-			final Master master = (Master) registry.lookup("master");
 			master.registerReferee(stub);
 
 			System.out.println("Press any key to start");

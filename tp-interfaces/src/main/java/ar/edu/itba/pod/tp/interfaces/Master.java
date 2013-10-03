@@ -22,13 +22,7 @@ public interface Master extends Remote
 	 */
 	void registerReferee(Referee referee) throws RemoteException;
 
-	/**
-	 * Validaciones: no se puede repetir el playerName en un game
-	 * @param referee
-	 * @param players
-	 * @throws RemoteException 
-	 */
-	void registerNewGame(PlayerReferee referee, List<PlayerReferee>players) throws RemoteException;
+	int getRequestsTotal() throws RemoteException;
 	
 	void registerGameResults(PlayerReferee referee, String results) throws RemoteException;
 	
