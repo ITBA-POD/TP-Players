@@ -4,6 +4,7 @@
  */
 package ar.edu.itba.pod.tp.referee;
 
+import ar.edu.itba.pod.tp.interfaces.GameResult;
 import ar.edu.itba.pod.tp.interfaces.Player;
 import ar.edu.itba.pod.tp.interfaces.PlayerLoserException;
 import ar.edu.itba.pod.tp.interfaces.Referee;
@@ -36,12 +37,19 @@ public class RefereeServer implements Referee
 	boolean playing;
 	final int clientTotal;
 	final Map<String, List<Player>> players = new HashMap();
+	final String name;
 
-	public RefereeServer(int clientTotal)
+	public RefereeServer(String name, int clientTotal)
 	{
+		this.name = name;
 		this.clientTotal = clientTotal;
 	}
 
+	@Override
+	public String getName()
+	{
+		return name;
+	}
 	
 	@Override
 	public Registration newPlayer(String playerName, Player playerClient) throws RemoteException
@@ -199,10 +207,12 @@ public class RefereeServer implements Referee
 		return playerId;
 	}
 
-	public void hostGame(int gameIn, String gameHash) throws RemoteException
+	@Override
+	public GameResult hostGame(int gameIn, String gameHash, List<String> players) throws RemoteException
 	{
 		System.out.println("hostGame");
 //		throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+		return null;
 	}
 
 	public void joinGame(int gameIn, String refereeName) throws RemoteException

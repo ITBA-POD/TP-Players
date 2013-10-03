@@ -6,13 +6,15 @@ import java.util.List;
 
 public interface Referee extends Remote
 {
+	String getName() throws RemoteException;
+	
 	/**
-	 * The Referee will host a new game, and will wait for players
+	 * Start a new game, notify players, let them play and process results and return the results
 	 * @param gameIn 
 	 * @param gameHash
 	 * @throws RemoteException 
 	 */
-	void hostGame(final int gameIn, final String gameHash) throws RemoteException;
+	GameResult hostGame(final int gameIn, final String gameHash, List<String> players) throws RemoteException;
 	
 	/**
 	 * A player from this Referee must join an new game.

@@ -17,12 +17,10 @@ public interface Master extends Remote
 {
 	/**
 	 * A new referee registers with the master
-	 * @param refereeName
-	 * @param refereeClient
 	 * @return
 	 * @throws RemoteException 
 	 */
-	void registerReferee(String refereeName, Referee refereeClient) throws RemoteException;
+	void registerReferee(Referee referee) throws RemoteException;
 
 	/**
 	 * Validaciones: no se puede repetir el playerName en un game
