@@ -24,9 +24,7 @@ public interface Master extends Remote
 
 	int getRequestsTotal() throws RemoteException;
 	
-	void registerGameResults(PlayerReferee referee, String results) throws RemoteException;
+	int getGameTimeout() throws RemoteException;
 	
-	List<PlayerReferee> getActivePlayers() throws RemoteException;
-	
-	Map<String, Integer> getScores() throws RemoteException;
+	int getTotalTime() throws RemoteException;
 }

@@ -1,33 +1,30 @@
 /*
  * To change this template, choose Tools | Templates
- * and open the template in the editor.
+ * and open the template position the editor.
  */
 package ar.edu.itba.pod.tp.master;
 
 import ar.edu.itba.pod.tp.interfaces.GameResult;
 import ar.edu.itba.pod.tp.interfaces.Master;
-import ar.edu.itba.pod.tp.interfaces.PlayerReferee;
-import ar.edu.itba.pod.tp.interfaces.PlayerRefereeRegistration;
 import ar.edu.itba.pod.tp.interfaces.Referee;
-import java.rmi.AccessException;
-import java.rmi.NotBoundException;
 import java.rmi.Remote;
 import java.rmi.RemoteException;
 import java.rmi.registry.Registry;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -40,23 +37,48 @@ public class MasterServer implements Master
 	private final Registry registry;
 	private final Map<String, Referee> referees = Collections.synchronizedMap(new HashMap());
 	private final int requestsTotal;
-	private final int gameTotal;
-	private final int gameTimeout = 2;
+	private final int gameTimeout;
+	private final int totalTime;
+	private final Map<String, GameResult> results = Collections.synchronizedMap(new HashMap());
+	private Integer currentGameIn = 0;
+	private boolean gameRunning = true;
 
-	MasterServer(Registry registry, int requestsTotal, int gameTotal)
+	MasterServer(Registry registry, int requestsTotal, int gameTimeout, int totalTime)
 	{
 		this.registry = registry;
 		this.requestsTotal = requestsTotal;
-		this.gameTotal = gameTotal;
+		this.gameTimeout = gameTimeout;
+		this.totalTime = totalTime;
 	}
 	
+	@Override
+	public int getRequestsTotal()
+	{
+		return requestsTotal;
+	}
+
+	@Override
+	public int getGameTimeout() throws RemoteException
+	{
+		return gameTimeout;
+	}
+
+	@Override
+	public int getTotalTime() throws RemoteException
+	{
+		return totalTime;
+	}
+
 	@Override
 	public void registerReferee(Referee referee) throws RemoteException
 	{
 		try {
+			if (referees.containsKey(referee.getName())) {
+				throw new IllegalArgumentException("Referee already exists!");
+			}
 			final Remote refereeRemote = registry.lookup("referees/" + referee.getName());
 			if (!(refereeRemote instanceof Referee)) {
-				throw new IllegalArgumentException("Remote bind is not a Referee");
+				throw new IllegalArgumentException("Remote object " + referee.getName() + " bind is not a Referee");
 			}
 			if (!referee.getName().equals(((Referee) refereeRemote).getName())) {
 				throw new IllegalArgumentException("[BUG] Invalid name");
@@ -69,47 +91,36 @@ public class MasterServer implements Master
 		}
 	}
 
-	public void registerNewGame(PlayerReferee referee, List<PlayerReferee> players) throws RemoteException
+	void printResults()
 	{
-		throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-	}
-
-	public void registerGameResults(PlayerReferee referee, String results) throws RemoteException
-	{
-		throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-	}
-
-	public List<PlayerReferee> getActivePlayers() throws RemoteException
-	{
-		throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-	}
-
-	public Map<String, Integer> getScores() throws RemoteException
-	{
-		throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-	}
-
-	private List<Referee> copyReferees()
-	{
-		synchronized (referees) {
-			return new ArrayList<Referee>(referees.values());
+		System.out.println("Total Games: " + results.size());
+		final Map<String, Integer> points = new HashMap();
+		for (GameResult gameResult : results.values()) {
+			final List<GameResult.PlayerResult> results1 = gameResult.getResults();
+			for (GameResult.PlayerResult playerResult : results1) {
+				if (playerResult.status != GameResult.Status.SUCCESS) {
+					System.out.println("Discard " + playerResult);
+					continue;
+				}
+				int currentScore = points.containsKey(playerResult.player) ? points.get(playerResult.player) : 0;
+				int gameScore = results1.size() - playerResult.position;
+				points.put(playerResult.player, currentScore + gameScore);
+			}
+		}
+		final Map<String, Integer> sortedPoints = sortByValue(points);
+		for (Map.Entry<String, Integer> entry : sortedPoints.entrySet()) {
+			System.out.println(String.format("Player: %s Score:%s", entry.getKey(), entry.getValue()));
 		}
 	}
-
+	
+	void shutdown()
+	{
+		this.gameRunning = false;
+	}
+	
 	Map<String, Referee> getReferees()
 	{
 		return referees;
-	}
-
-	@Override
-	public int getRequestsTotal()
-	{
-		return requestsTotal;
-	}
-
-	int getGameTotal()
-	{
-		return gameTotal;
 	}
 
 	Runnable newRunner()
@@ -125,18 +136,25 @@ public class MasterServer implements Master
 		{
 			do {
 				try {
-					hostGame();
+					final String gameHash = UUID.randomUUID().toString();
+					List<Referee> myReferees;
+					int gameIn;
+					synchronized (referees) {
+						myReferees = new ArrayList<Referee>(referees.values());
+						gameIn = currentGameIn++;
+					}
+					
+					hostGame(gameIn, gameHash, myReferees);
 				}
 				catch (Exception ex) {
 					Logger.getLogger(MasterServer.class.getName()).log(Level.SEVERE, null, ex);
 				}
-			} while (true);
+			} while (gameRunning);
+			System.out.println("Runner finished");
 		}
 		
-		private void hostGame() throws RemoteException, TimeoutException, InterruptedException, ExecutionException
+		private void hostGame(final int gameIn, final String gameHash, final List<Referee> myReferees) throws Exception
 		{
-			final String salt = UUID.randomUUID().toString();
-			final List<Referee> myReferees = copyReferees();
 			final int opt = (int) (java.lang.Math.random() * myReferees.size());
 			final Referee referee = myReferees.remove(opt);
 			final List<String> players = new ArrayList();
@@ -146,11 +164,36 @@ public class MasterServer implements Master
 			Future<GameResult> submit = executor.submit(new Callable<GameResult>() {
 				public GameResult call() throws Exception
 				{
-					return referee.hostGame(requestsTotal, salt, players);
+					System.out.println("Game started: " + gameHash);
+					return referee.hostGame(gameIn, gameHash, players);
 				}
 			});
 
-			submit.get(gameTimeout, TimeUnit.SECONDS);
+			final GameResult result = submit.get(gameTimeout, TimeUnit.SECONDS);
+			System.out.println("Game finished: " + gameHash + " Result: " + result != null ? result.toString() : "Timeout");
+			if (result != null) {
+				results.put(gameHash, result);
+			}
 		}
+	}
+
+	private static Map sortByValue(Map map)
+	{
+		List list = new LinkedList(map.entrySet());
+		Collections.sort(list, new Comparator()
+		{
+			public int compare(Object o1, Object o2)
+			{
+				return ((Comparable) ((Map.Entry) (o1)).getValue())
+						.compareTo(((Map.Entry) (o2)).getValue());
+			}
+		});
+
+		Map result = new LinkedHashMap();
+		for (Iterator it = list.iterator(); it.hasNext();) {
+			Map.Entry entry = (Map.Entry) it.next();
+			result.put(entry.getKey(), entry.getValue());
+		}
+		return result;
 	}
 }

@@ -48,15 +48,15 @@ public class MasterApp
 
 		final int port = Integer.valueOf( cmdLine.getOptionValue(PORT_L, PORT_D));
 		final int requestsTotal = Integer.valueOf( cmdLine.getOptionValue(REQS_L, REQS_D));
-		final int gameTotal = Integer.valueOf( cmdLine.getOptionValue(GAME_L, GAME_D));
+		final int totalTime = Integer.valueOf( cmdLine.getOptionValue(GAME_L, GAME_D));
 		final int timeout = Integer.valueOf( cmdLine.getOptionValue(TIME_L, TIME_D));
 		final int concurrency = Integer.valueOf( cmdLine.getOptionValue(CONC_L, CONC_D));
 		
 		System.out.println("Master starting on port: " + port);
 		Registry registry = LocateRegistry.createRegistry(port);
 
-		System.out.println(String.format("Master started - requests total: %s game score total: %s", requestsTotal, gameTotal));
-		final MasterServer server = new MasterServer(registry, requestsTotal, gameTotal);
+		System.out.println(String.format("Master started - requests total: %s, game timeout: %s, total game time: %s", requestsTotal, timeout, totalTime));
+		final MasterServer server = new MasterServer(registry, requestsTotal, timeout, totalTime);
 		Master stub = (Master) UnicastRemoteObject.exportObject(server, port);
 		registry.bind("master", stub);
 
@@ -66,17 +66,33 @@ public class MasterApp
 			scan.nextLine();
 			
 		} while(server.getReferees().size() < 2);
-		System.out.println(String.format("Game will finish in %s seconds. %d players", timeout, server.getReferees().size()));
+		System.out.println(String.format("Game will finish in %s seconds. %d players", totalTime, server.getReferees().size()));
 		
-		final ExecutorService executor = Executors.newFixedThreadPool(concurrency);
+		final ExecutorService executor = Executors.newFixedThreadPool(concurrency + 1);
 
 		for (int i = 0; i < concurrency; i++) {
 			executor.submit(server.newRunner());
 		}
-
-		executor.awaitTermination(timeout, TimeUnit.SECONDS);
+//		executor.submit(new Runnable() {
+//
+//			public void run()
+//			{
+//				try {
+//					Thread.sleep(totalTime * 1000);
+//				}
+//				catch (InterruptedException ex) {
+//					Logger.getLogger(MasterApp.class.getName()).log(Level.SEVERE, null, ex);
+//				}
+//				System.out.println("BAJANDO EL JUEGO");
+//				server.shutdown();
+//				executor.shutdown();
+//			}
+//		});
+		executor.awaitTermination(totalTime, TimeUnit.SECONDS);
 				
-		System.out.println("Finished");
+		System.out.println("Finished: Results:");
+		server.printResults();
+		
 		System.exit(0);
     }
 
@@ -85,7 +101,7 @@ public class MasterApp
 		final Options result = new Options();
 		result.addOption(PORT_S, PORT_L, true, "Port");
 		result.addOption(REQS_S, REQS_L, true, "Requests Total");
-		result.addOption(GAME_S, GAME_L, true, "Game Score Total");
+		result.addOption(GAME_S, GAME_L, true, "Game Total Time");
 		result.addOption(TIME_S, TIME_L, true, "Game Timeout");
 		result.addOption(CONC_S, CONC_L, true, "Game Concurrency");
 		result.addOption("help", false, "Help");
@@ -100,10 +116,10 @@ public class MasterApp
 	private static final String REQS_D = "200";
 	private static final String GAME_L = "game";
 	private static final String GAME_S = "g";
-	private static final String GAME_D = "100";
+	private static final String GAME_D = "10";
 	private static final String TIME_L = "timeout";
 	private static final String TIME_S = "t";
-	private static final String TIME_D = "60";
+	private static final String TIME_D = "2";
 	private static final String CONC_L = "concurrency";
 	private static final String CONC_S = "c";
 	private static final String CONC_D = "2";

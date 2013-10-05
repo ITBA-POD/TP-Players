@@ -231,8 +231,16 @@ public class RefereeServer implements Referee
 				Logger.getLogger(RefereeServer.class.getName()).log(Level.SEVERE, null, ex);
 			}
 		}
-//		throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-		return null;
+		try {
+			//		throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+			Thread.sleep(20);
+		}
+		catch (InterruptedException ex) {
+			Logger.getLogger(RefereeServer.class.getName()).log(Level.SEVERE, null, ex);
+		}
+		GameResult gameResult = new GameResult();
+		gameResult.addPlayerResult("pepe", 0, GameResult.Status.SUCCESS, 0, 0);
+		return gameResult;
 	}
 
 	@Override
