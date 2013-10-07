@@ -14,7 +14,7 @@ public interface Referee extends Remote
 	 * @param gameHash
 	 * @throws RemoteException 
 	 */
-	GameResult hostGame(final int gameIn, final String gameHash, List<String> players) throws RemoteException;
+	GameResult hostGame(final int gameIn, final String gameHash, List<String> guests) throws RemoteException;
 	
 	/**
 	 * A player from this Referee must join an new game.
@@ -22,7 +22,7 @@ public interface Referee extends Remote
 	 * @param refereeName the lookup name in the registry of the host referee 
 	 * @throws RemoteException 
 	 */
-	void joinGame(final int gameIn, final String gameHash) throws RemoteException;
+	void joinGame(final int gameIn, final String gameHash, final String host) throws RemoteException;
 	
 	Registration newPlayer(String playerName, Player playerClient) throws RemoteException;
 	

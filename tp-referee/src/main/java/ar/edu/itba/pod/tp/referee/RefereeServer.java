@@ -216,16 +216,16 @@ public class RefereeServer implements Referee
 	}
 
 	@Override
-	public GameResult hostGame(int gameIn, String gameHash, List<String> players) throws RemoteException
+	public GameResult hostGame(int gameIn, String gameHash, List<String> guests) throws RemoteException
 	{
 		System.out.println("hostGame " + gameHash);
-		for (String player : players) {
-			System.out.println("Looking for player " + player);
-			Referee otherReferee;
+		for (String guest : guests) {
+			System.out.println("Looking for referee guest " + guest);
+			Referee guestReferee;
 			try {
-				otherReferee = (Referee) registry.lookup("referees/" + player);
+				guestReferee = (Referee) registry.lookup("referees/" + guest);
 
-				otherReferee.joinGame(gameIn, gameHash);
+				guestReferee.joinGame(gameIn, gameHash, getName());
 			}
 			catch (Exception ex) {
 				Logger.getLogger(RefereeServer.class.getName()).log(Level.SEVERE, null, ex);
@@ -244,7 +244,7 @@ public class RefereeServer implements Referee
 	}
 
 	@Override
-	public void joinGame(int gameIn, String gameHash) throws RemoteException
+	public void joinGame(int gameIn, String gameHash, String host) throws RemoteException
 	{
 		System.out.println("joinGame");
 //		throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
