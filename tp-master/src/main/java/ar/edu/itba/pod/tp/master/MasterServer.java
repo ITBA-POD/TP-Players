@@ -79,7 +79,7 @@ public class MasterServer implements Master
 			if (referees.containsKey(referee.getName())) {
 				throw new IllegalArgumentException("Referee already exists!");
 			}
-			final Remote refereeRemote = registry.lookup("referees/" + referee.getName());
+			final Remote refereeRemote = lookup("referees/" + referee.getName());
 			if (!(refereeRemote instanceof Referee)) {
 				throw new IllegalArgumentException("Remote object " + referee.getName() + " bind is not a Referee");
 			}
@@ -94,14 +94,17 @@ public class MasterServer implements Master
 		}
 	}
 
+	@Override
 	public void proxyRebind(String name, Remote object) throws RemoteException, AccessException
 	{
-		try {
-			this.registry.bind(name, object);
-		}
-		catch (AlreadyBoundException ex) {
-			throw new RemoteException("Cannot bind:" + name, ex);
-		}
+		this.objects.put(name, object);
+	}
+
+	private Map<String, Remote> objects = new HashMap<String, Remote>();
+
+	public Remote lookup(String name) throws RemoteException
+	{
+		return this.objects.get(name);
 	}
 	
 	void printResults()

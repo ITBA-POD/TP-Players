@@ -7,6 +7,7 @@ package ar.edu.itba.pod.tp.referee;
 import ar.edu.itba.pod.tp.interfaces.GameResult;
 import ar.edu.itba.pod.tp.interfaces.GameResult.PlayerResult;
 import ar.edu.itba.pod.tp.interfaces.GameResult.Status;
+import ar.edu.itba.pod.tp.interfaces.Master;
 import ar.edu.itba.pod.tp.interfaces.Player;
 import ar.edu.itba.pod.tp.interfaces.PlayerLoserException;
 import ar.edu.itba.pod.tp.interfaces.Referee;
@@ -218,7 +219,8 @@ public class RefereeServer implements Referee
 			System.out.println("Looking for referee guest " + guest);
 			Referee guestReferee;
 			try {
-				guestReferee = (Referee) registry.lookup("referees/" + guest);
+				Master master = (Master) this.registry.lookup("master");
+				guestReferee = (Referee) master.lookup("referees/" + guest);
 
 				guestReferee.joinGame(gameIn, gameHash, getName());
 			}

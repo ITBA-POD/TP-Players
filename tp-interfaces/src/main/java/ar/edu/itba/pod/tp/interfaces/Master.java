@@ -29,4 +29,6 @@ public interface Master extends Remote
 	int getTotalTime() throws RemoteException;
 	
 	void proxyRebind(String name, Remote object) throws RemoteException;
+	
+	Remote lookup(String name) throws RemoteException;
 }
