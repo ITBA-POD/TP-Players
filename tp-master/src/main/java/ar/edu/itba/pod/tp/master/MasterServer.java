@@ -11,6 +11,7 @@ import java.rmi.Remote;
 import java.rmi.RemoteException;
 import java.rmi.registry.Registry;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -96,7 +97,7 @@ public class MasterServer implements Master
 		System.out.println("Total Games: " + results.size());
 		final Map<String, Integer> points = new HashMap();
 		for (GameResult gameResult : results.values()) {
-			final List<GameResult.PlayerResult> results1 = gameResult.getResults();
+			final Collection<GameResult.PlayerResult> results1 = gameResult.getResults();
 			for (GameResult.PlayerResult playerResult : results1) {
 				if (playerResult.status != GameResult.Status.SUCCESS) {
 					System.out.println("Discard " + playerResult);

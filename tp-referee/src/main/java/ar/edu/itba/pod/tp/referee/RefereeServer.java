@@ -5,6 +5,8 @@
 package ar.edu.itba.pod.tp.referee;
 
 import ar.edu.itba.pod.tp.interfaces.GameResult;
+import ar.edu.itba.pod.tp.interfaces.GameResult.PlayerResult;
+import ar.edu.itba.pod.tp.interfaces.GameResult.Status;
 import ar.edu.itba.pod.tp.interfaces.Player;
 import ar.edu.itba.pod.tp.interfaces.PlayerLoserException;
 import ar.edu.itba.pod.tp.interfaces.Referee;
@@ -132,27 +134,20 @@ public class RefereeServer implements Referee
 	}
 
 	@Override
-	public String showResults() throws RemoteException
+	public Map<Player, GameResult.PlayerResult> showResults() throws RemoteException
 	{
-		final StringBuilder result = new StringBuilder();
-		result.append("Current Results:\n");
-		for (Map.Entry<Player, Registration> entry : initialRegistrations.entrySet()) {
-			Registration registration = entry.getValue();
-			boolean survived = registrations.containsKey(entry.getKey());
-			boolean okClient = registration.clientCount >= requestsTotal;
-			boolean okServer = registration.serverCount >= requestsTotal;
-			if (survived) {
-				result.append(String.format("Player:%s %s%s C:%s S: %s\n", registration.name, okClient ? "C" : "-", okServer ? "S" : "-", registration.clientCount, registration.serverCount));
-			} else {
-				result.append(String.format("Player:%s LOSER C:%s S: %s\n", registration.name, registration.clientCount, registration.serverCount));
+		Map<Player, GameResult.PlayerResult> map = new HashMap<Player, GameResult.PlayerResult>();
+
+		for (Map.Entry<Player, Registration> e : initialRegistrations
+				.entrySet()) {
+			if (!map.containsKey(e.getKey())) {
+				map.put(e.getKey(), new GameResult.PlayerResult(e.getValue().name, Status.SUCCESS, 0, 0));
 			}
+			PlayerResult p = map.get(e.getKey());
+			p.serverCount += e.getValue().serverCount;
+			p.playerCount += e.getValue().clientCount;
 		}
-		
-		result.append("\n\n winners:\n");
-		for (Registration registration : winners) {
-			result.append(String.format("Player: %s\n", registration.name));
-		}
-		return result.toString();
+		return map;
 	}
 	
 	private Registration register(String playerName, Player playerClient)
@@ -239,7 +234,7 @@ public class RefereeServer implements Referee
 			Logger.getLogger(RefereeServer.class.getName()).log(Level.SEVERE, null, ex);
 		}
 		GameResult gameResult = new GameResult();
-		gameResult.addPlayerResult("pepe", 0, GameResult.Status.SUCCESS, 0, 0);
+		gameResult.addPlayerResult("pepe", GameResult.Status.SUCCESS, 0, 0);
 		return gameResult;
 	}
 
