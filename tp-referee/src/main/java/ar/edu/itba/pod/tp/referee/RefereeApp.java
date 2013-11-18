@@ -45,7 +45,7 @@ public class RefereeApp
 			final RefereeServer server = new RefereeServer(name, requestsTotal, registry);
 			System.out.println("Binding my referee");
 			final Referee stub = (Referee) UnicastRemoteObject.exportObject(server, 0);
-			registry.bind("referees/" + name, stub);
+			master.proxyRebind("referees/" + name, stub);
 
 			master.registerReferee(stub);
 

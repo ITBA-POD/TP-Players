@@ -27,4 +27,6 @@ public interface Master extends Remote
 	int getGameTimeout() throws RemoteException;
 	
 	int getTotalTime() throws RemoteException;
+	
+	void proxyRebind(String name, Remote object) throws RemoteException;
 }

@@ -7,6 +7,8 @@ package ar.edu.itba.pod.tp.master;
 import ar.edu.itba.pod.tp.interfaces.GameResult;
 import ar.edu.itba.pod.tp.interfaces.Master;
 import ar.edu.itba.pod.tp.interfaces.Referee;
+import java.rmi.AccessException;
+import java.rmi.AlreadyBoundException;
 import java.rmi.Remote;
 import java.rmi.RemoteException;
 import java.rmi.registry.Registry;
@@ -92,6 +94,16 @@ public class MasterServer implements Master
 		}
 	}
 
+	public void proxyRebind(String name, Remote object) throws RemoteException, AccessException
+	{
+		try {
+			this.registry.bind(name, object);
+		}
+		catch (AlreadyBoundException ex) {
+			throw new RemoteException("Cannot bind:" + name, ex);
+		}
+	}
+	
 	void printResults()
 	{
 		System.out.println("Total Games: " + results.size());
